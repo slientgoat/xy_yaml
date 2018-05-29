@@ -3,9 +3,9 @@ defmodule XyYaml do
   Documentation for XyYaml.
   """
   # phoenix project name
-  @phx_name Application.get_env(:xy_yaml, :phx_name) || :xy_yaml
+  def phx_name, do: Application.get_env(:xy_yaml, :phx_name) || :xy_yaml
   # origin yaml file save directory
-  @file_dir Application.get_env(:xy_yaml, :file_dir) || "/priv/yamls"
+  def file_dir, do: Application.get_env(:xy_yaml, :file_dir) || "/priv/yamls"
   @doc """
   新旧数据合并,
     仅当changes中同级的键值类型与origin一致时，合并的时候使用changes的键值对
@@ -56,8 +56,8 @@ defmodule XyYaml do
   读取配置
   """
   def read_from_file(filename) do
-    Application.app_dir(@phx_name)
-    |> Path.join(@file_dir)
+    Application.app_dir(phx_name())
+    |> Path.join(file_dir())
     |> Path.join(filename)
     |> YamlElixir.read_from_file()
   end

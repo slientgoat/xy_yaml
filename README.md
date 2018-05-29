@@ -25,7 +25,7 @@ To use this lib, you should config variable (probably in
 your app.config):
 
 ```elixir
-config :xy_img,
+config :xy_yaml,
   phx_name: :im_webserver, #phoenix project name
   file_dir: "priv/sets/" #origin yaml file save directory,default: "priv/yamls/"
 ```
