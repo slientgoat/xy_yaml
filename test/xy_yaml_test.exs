@@ -40,4 +40,10 @@ defmodule XyYamlTest do
     origin = %{k1: %{k2: %{k3: %{k4: :v4}}}, more_k1: :more_v1}
     assert XyYaml.merge(changes, origin) == %{k1: %{k2: %{k3: %{k4: :v4}}}, more_k1: :more_v1}
   end
+
+  test "use origin when theirs value's format not match" do
+    changes = %{k1: %{k2: %{k3: %{k4: :still_as_atom}}}, more_k1: "will_be_number1",more_k2: "never_change"}
+    origin = %{k1: %{k2: %{k3: %{k4: :v4}}}, more_k1: 1,more_k2: ""}
+    assert XyYaml.merge(changes, origin) == %{k1: %{k2: %{k3: %{k4: :still_as_atom}}}, more_k1: 1,more_k2: "never_change"}
+  end
 end

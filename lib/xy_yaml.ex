@@ -6,6 +6,7 @@ defmodule XyYaml do
   def phx_name, do: Application.get_env(:xy_yaml, :phx_name) || :xy_yaml
   # origin yaml file save directory
   def file_dir, do: Application.get_env(:xy_yaml, :file_dir) || "/priv/yamls"
+
   @doc """
   新旧数据合并,
     仅当changes中同级的键值类型与origin一致时，合并的时候使用changes的键值对
@@ -39,7 +40,7 @@ defmodule XyYaml do
         Map.put(changes, key, origin[key])
         |> merge(origin, keys)
 
-      IEx.Info.info(changes[key]) != IEx.Info.info(origin[key]) ->
+      data_type_equal?(changes[key], origin[key]) == false ->
         Map.put(changes, key, origin[key])
         |> merge(origin, keys)
 
@@ -60,5 +61,20 @@ defmodule XyYaml do
     |> Path.join(file_dir())
     |> Path.join(filename)
     |> YamlElixir.read_from_file()
+  end
+
+  # 判断值数据类型是否一致
+  defp data_type_equal?(changes_kv, origin_kv) do
+    type1 =
+      changes_kv
+      |> IEx.Info.info()
+      |> List.keyfind("Data type", 0)
+
+    type2 =
+      origin_kv
+      |> IEx.Info.info()
+      |> List.keyfind("Data type", 0)
+
+    type1 == type2
   end
 end
