@@ -68,12 +68,12 @@ defmodule XyYaml do
     type1 =
       changes_kv
       |> IEx.Info.info()
-      |> List.keyfind("Data type", 0)
+      |> List.first()
 
     type2 =
       origin_kv
       |> IEx.Info.info()
-      |> List.keyfind("Data type", 0)
+      |> List.first()
 
     type1 == type2
   end
