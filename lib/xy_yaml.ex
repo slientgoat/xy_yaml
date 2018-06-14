@@ -26,10 +26,10 @@ defmodule XyYaml do
     ...> XyYaml.merge(changes,origin)
     %{"k1" => %{"k2" => %{"k3" => %{"k4" => "v41"}}}, "k2" => "v2"}
 
-    iex> origin=%{"k1" => %{"k2" => %{"k3" => %{"__force__" => true, "k4" => "force_replace"}}},"k2" => "v2"}
-    ...> changes=%{"k1" => %{"k2" => %{"k3" => %{"k4" => "v42"}}}, "k2" => "v2_changes"}
+    iex> origin =%{"k1" => %{"__force__" => true, "k2" => "force_replace", "k3"=>%{"k4"=>"v4","k5"=>"v5"}}}
+    ...> changes=%{"k1" => %{"k2" => "v2", "k3"=>%{"k4"=>"v4","k5"=>"changes"}}}
     ...> XyYaml.merge(changes,origin)
-    %{"k1" => %{"k2" => %{"k3" => %{"k4" => "force_replace"}}},"k2" => "v2_changes"}
+    %{"k1" => %{"k2" => "force_replace", "k3"=>%{"k4"=>"v4","k5"=>"v5"}}}
 
   """
   def merge(changes, origin) when is_map(origin) do
@@ -47,7 +47,10 @@ defmodule XyYaml do
     changes_kv = changes[key]
 
     cond do
-      is_force == true or Map.has_key?(changes, key) == false ->
+      is_force == true ->
+        merge(origin, origin, [])
+
+      Map.has_key?(changes, key) == false ->
         Map.put(changes, key, origin_kv)
         |> merge(origin, keys)
 
