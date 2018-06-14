@@ -7,25 +7,33 @@ defmodule XyYaml do
   # origin yaml file save directory
   def file_dir, do: Application.get_env(:xy_yaml, :file_dir) || "/priv/yamls"
 
+  @force_replace_flag "__force__"
   @doc """
   新旧数据合并,
     仅当changes中同级的键值类型与origin一致时，合并的时候使用changes的键值对
     在changes中，同级的键值类型与origin不一致、键在origin中不存在时，合并时使用origin的键值对
+    在同级的changes中，origin包含键"__force__"，合并时使用origin的键值对，参照例子3
 
   ## Examples
 
-    iex> origin=%{k1: %{k2: %{k3: %{k4: :v4}}}}
+    iex> origin=%{"k1" => %{"k2" => %{"k3" => %{"k4" => "v4"}}}}
     ...> changes=nil
     ...> XyYaml.merge(changes,origin)
-    %{k1: %{k2: %{k3: %{k4: :v4}}}}
+    %{"k1" => %{"k2" => %{"k3" => %{"k4" => "v4"}}}}
 
-    iex> origin=%{k1: %{k2: %{k3: %{k4: :v4}}},k2: :v2}
-    ...> changes=%{k1: %{k2: %{k3: %{k4: :v41,k5: :k5}}},k2: 1}
+    iex> origin=%{"k1" => %{"k2" => %{"k3" => %{"k4" => "v4"}}}, "k2" => "v2"}
+    ...> changes=%{"k1" => %{"k2" => %{"k3" => %{"k4" => "v41", "k5" => "k5"}}}, "k2" => 1}
     ...> XyYaml.merge(changes,origin)
-    %{k1: %{k2: %{k3: %{k4: :v41}}},k2: :v2}
+    %{"k1" => %{"k2" => %{"k3" => %{"k4" => "v41"}}}, "k2" => "v2"}
+
+    iex> origin=%{"k1" => %{"k2" => %{"k3" => %{"__force__" => true, "k4" => "force_replace"}}},"k2" => "v2"}
+    ...> changes=%{"k1" => %{"k2" => %{"k3" => %{"k4" => "v42"}}}, "k2" => "v2_changes"}
+    ...> XyYaml.merge(changes,origin)
+    %{"k1" => %{"k2" => %{"k3" => %{"k4" => "force_replace"}}},"k2" => "v2_changes"}
+
   """
   def merge(changes, origin) when is_map(origin) do
-    merge(changes || %{}, origin, Map.keys(origin))
+    merge(changes || %{}, origin, Map.keys(origin) |> List.delete(@force_replace_flag))
   end
 
   def merge(changes, _origin, []) do
@@ -34,18 +42,25 @@ defmodule XyYaml do
 
   def merge(changes, origin, [key | keys]) do
     changes = Map.take(changes, Map.keys(origin))
+    {is_force, origin} = Map.pop(origin, @force_replace_flag)
+    origin_kv = origin[key]
+    changes_kv = changes[key]
 
     cond do
-      Map.has_key?(changes, key) == false ->
-        Map.put(changes, key, origin[key])
+      is_force == true or Map.has_key?(changes, key) == false ->
+        Map.put(changes, key, origin_kv)
         |> merge(origin, keys)
 
-      data_type_equal?(changes[key], origin[key]) == false ->
-        Map.put(changes, key, origin[key])
+      data_type_equal?(changes_kv, origin_kv) == false ->
+        Map.put(changes, key, origin_kv)
         |> merge(origin, keys)
 
-      is_map(origin[key]) ->
-        Map.put(changes, key, merge(changes[key], origin[key], Map.keys(origin[key])))
+      is_map(origin_kv) ->
+        origin_kv_k =
+          Map.keys(origin_kv)
+          |> List.delete(@force_replace_flag)
+
+        Map.put(changes, key, merge(changes_kv, origin_kv, origin_kv_k))
         |> merge(origin, keys)
 
       true ->
