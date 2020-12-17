@@ -82,6 +82,10 @@ defmodule XyYaml do
   end
 
   # 判断值数据类型是否一致
+  defp data_type_equal?(changes_kv, nil) do
+    true
+  end
+  
   defp data_type_equal?(changes_kv, origin_kv) do
     type1 =
       changes_kv
